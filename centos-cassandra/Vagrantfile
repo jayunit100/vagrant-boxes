@@ -16,10 +16,23 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, host: 9160, guest: 9160
   config.vm.network :forwarded_port, host: 8888, guest: 8888
   config.vm.network :forwarded_port, host: 7199, guest: 7199
+  config.vm.network :forwarded_port, host: 9042, guest: 9042
   config.vm.provision :puppet do |puppet|
     puppet.module_path = "manifests/modules"
     puppet.manifests_path = "manifests"
     puppet.manifest_file  = "init.pp"
     puppet.options = "--verbose --debug"
   end
+
+  # Copy the prepopulated config.  mainly fixes a minor bug in puppet.
+  config.vm.provision :shell, :inline => "cp /vagrant/cassandra.yaml /etc/cassandra/conf/cassandra.yaml" 
+  config.vm.provision :shell, :inline => "cp /vagrant/cassandra-env.sh /etc/cassandra/conf/cassandra-env.sh"
+  config.vm.provision :shell, :inline => "sudo cassandra"
+  
+  config.vm.provision :shell, :inline => "sudo service iptables stop"
+  #Optionally, you could create a db schema here ... or just do it in the Cassandra java API in your app.
+  #cqlsh --e "CREATE KEYSPACE IF NOT EXISTS streaming_test WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 3 }"
+
+
 end
+
